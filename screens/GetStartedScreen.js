@@ -21,7 +21,7 @@ export default function GetStartedScreen() {
         <View style={styles.logoContainer}>
           <View style={styles.logoIconContainer}>
             <MaterialCommunityIcons name="paw" size={30} color="#0a3d62" style={styles.pawIcon} />
-            <FontAwesome5 name="map-marker-alt" size={20} color="#0a3d62" style={styles.locationIcon} />
+           
           </View>
           <Text style={styles.logoText}>Petsy</Text>
         </View>

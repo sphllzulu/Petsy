@@ -1218,7 +1218,7 @@ export default function MyPetsScreen() {
             
             <View style={styles.tagsImageContainer}>
               <Image 
-                source={require('../assets/pet-tags.png')} 
+                source={require('../assets/pet-tag.png')} 
                 style={styles.tagsImage}
                 resizeMode="contain"
               />
