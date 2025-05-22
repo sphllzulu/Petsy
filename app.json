@@ -36,6 +36,9 @@
     },
     "updates": {
       "url": "https://u.expo.dev/533c0b37-fd03-41c4-806f-d221c1debd08"
-    }
+    },
+    "plugins": [
+      "expo-barcode-scanner"
+    ]
   }
 }
