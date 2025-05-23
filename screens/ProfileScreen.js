@@ -305,6 +305,25 @@ export default function PetProfileScreen({ navigation, route }) {
 };
 
 
+
+const updateQRCodeOwnerContact = async (serialNumber, ownerContactData) => {
+  try {
+    const qrCodesRef = collection(firestore, 'qrCodes');
+    const q = query(qrCodesRef, where('serialNumber', '==', serialNumber));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      const qrDoc = querySnapshot.docs[0];
+      await updateDoc(doc(firestore, 'qrCodes', qrDoc.id), {
+        ownerContact: ownerContactData,
+        ownerContactUpdatedAt: new Date()
+      });
+    }
+  } catch (error) {
+    console.error('Error updating QR code owner contact:', error);
+  }
+};
+
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -421,24 +440,29 @@ export default function PetProfileScreen({ navigation, route }) {
     setVaccinationFormVisible(true);
   };
 
-  const handleSaveOwnerContact = async () => {
-    try {
-      setIsUpdating(true);
-      
-      const ownerContactString = JSON.stringify(ownerContactDetails);
-      const petRef = doc(firestore, 'pets', petData.id);
-      await updateDoc(petRef, { ownerContact: ownerContactString });
-      
-      setPetData(prev => ({ ...prev, ownerContact: ownerContactString }));
-      setOwnerContactFormVisible(false);
-      Alert.alert('Success', 'Owner contact information updated successfully');
-    } catch (error) {
-      console.error('Error updating owner contact:', error);
-      Alert.alert('Error', 'Failed to update owner contact information');
-    } finally {
-      setIsUpdating(false);
+const handleSaveOwnerContact = async () => {
+  try {
+    setIsUpdating(true);
+    
+    const ownerContactString = JSON.stringify(ownerContactDetails);
+    const petRef = doc(firestore, 'pets', petData.id);
+    await updateDoc(petRef, { ownerContact: ownerContactString });
+    
+    // Add this section to update the QR code document
+    if (petData.serialNumber) {
+      await updateQRCodeOwnerContact(petData.serialNumber, ownerContactDetails);
     }
-  };
+    
+    setPetData(prev => ({ ...prev, ownerContact: ownerContactString }));
+    setOwnerContactFormVisible(false);
+    Alert.alert('Success', 'Owner contact information updated successfully');
+  } catch (error) {
+    console.error('Error updating owner contact:', error);
+    Alert.alert('Error', 'Failed to update owner contact information');
+  } finally {
+    setIsUpdating(false);
+  }
+};
 
   const closeVaccinationDetail = () => {
     setVaccinationDetailVisible(false);

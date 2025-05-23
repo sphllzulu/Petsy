@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
@@ -494,6 +492,7 @@ export default function MyPetsScreen({ navigation }) {
           status: 'assigned',
           assignedToPet: docRef.id,
           assignedToPetName: petData.name,
+          assignedToPetImage:petData.imageUrl,
           assignedAt: Timestamp.now()
         });
       }
