@@ -17,6 +17,7 @@ import OnboardingScreen from "./screens/OnboardingScreen";
 import SignInScreen from "./screens/SignInScreen";
 import SignUpScreen from "./screens/SignUpScreen";
 import OtpVerificationScreen from "./screens/OtpVerificationScreen";
+import PetProfileScreen from "./screens/ProfileScreen";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -123,6 +124,7 @@ function AppNavigator() {
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="OtpVerification" component={OtpVerificationScreen} />
+      <Stack.Screen name="Profile" component={PetProfileScreen}/>
     </Stack.Navigator>
   );
 }
