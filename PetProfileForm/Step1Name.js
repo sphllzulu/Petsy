@@ -308,6 +308,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     width: '100%',
+    marginBottom:20,
   },
   nextButtonText: {
     color: 'white',

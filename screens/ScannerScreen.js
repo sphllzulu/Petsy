@@ -133,18 +133,18 @@ export default function QRScannerScreen({ navigation, route }) {
   };
 
   // Validate if QR code is a valid Petsy QR
-  const isValidPetsyQR = (data) => {
-    try {
-      // Check if it's a URL format like: https://petfinder.com/found/PET123456-351926110010452
-      if (typeof data !== 'string') return false;
-      
-      // Should contain petfinder.com and have the right format
-      const urlPattern = /https?:\/\/.*petfinder\.com\/found\/[A-Z0-9]+-[0-9]+/i;
-      return urlPattern.test(data);
-    } catch (error) {
-      return false;
-    }
-  };
+const isValidPetsyQR = (data) => {
+  try {
+    // Check if it's a URL format like: https://petfinder-t3ue.onrender.com/find/351926110010452
+    if (typeof data !== 'string') return false;
+   
+    // Should contain petfinder and have the right format with /find/ path and 15-digit IMEI
+    const urlPattern = /https?:\/\/.*petfinder.*\..*\/find\/[0-9]{15}/i;
+    return urlPattern.test(data);
+  } catch (error) {
+    return false;
+  }
+};
 
   // Toggle flashlight
   const toggleTorch = () => {
