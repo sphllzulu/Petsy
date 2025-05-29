@@ -7,13 +7,23 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useStripe } from '@stripe/stripe-react-native';
+// import { saveOrderToFirebase, updateOrderStatus, savePaymentDetails } from './firebase-payment-utils';
+import { firestore, auth } from '../utils/firebaseConfig'; // Your existing config
+import { collection, addDoc, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
+
+const BACKEND_URL = 'https://petsyserver.onrender.com'; 
 
 export default function ShopScreen({ navigation }) {
   const [cartItems, setCartItems] = useState([]);
   const [selectedQuantity, setSelectedQuantity] = useState(0);
+  const [loading, setLoading] = useState(false);
+  
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   // Sample product data
   const products = [
@@ -78,30 +88,215 @@ export default function ShopScreen({ navigation }) {
     return item ? item.quantity : 0;
   };
 
-  // Handle checkout
-  const handleCheckout = () => {
+  // Initialize payment sheet
+  const initializePaymentSheet = async (clientSecret) => {
+    const { error } = await initPaymentSheet({
+      merchantDisplayName: 'Petsy Store',
+      paymentIntentClientSecret: clientSecret,
+      defaultBillingDetails: {
+        name: 'Customer Name',
+      },
+      allowsDelayedPaymentMethods: true,
+      returnURL: 'your-app://stripe-redirect', // Configure this in your app.json
+    });
+
+    if (error) {
+      console.error('Error initializing payment sheet:', error);
+      return false;
+    }
+
+    return true;
+  };
+
+  
+// Save order to Firestore
+ const saveOrderToFirebase = async (orderData) => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    const orderRef = await addDoc(collection(firestore, 'orders'), {
+      userId: user.uid,
+      userEmail: user.email,
+      ...orderData,
+      createdAt: serverTimestamp(),
+      status: 'pending'
+    });
+
+    return orderRef.id;
+  } catch (error) {
+    console.error('Error saving order:', error);
+    throw error;
+  }
+};
+
+// Update order status after payment
+ const updateOrderStatus = async (orderId, paymentData) => {
+  try {
+    const orderRef = doc(firestore, 'orders', orderId);
+    
+    await updateDoc(orderRef, {
+      status: paymentData.status === 'succeeded' ? 'completed' : 'failed',
+      paymentIntentId: paymentData.paymentIntentId,
+      paymentStatus: paymentData.status,
+      paidAt: paymentData.status === 'succeeded' ? serverTimestamp() : null,
+      paymentMethod: paymentData.paymentMethod || null
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    throw error;
+  }
+};
+
+// Save payment details
+ const savePaymentDetails = async (paymentData) => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    const paymentRef = await addDoc(collection(firestore, 'payments'), {
+      userId: user.uid,
+      paymentIntentId: paymentData.paymentIntentId,
+      amount: paymentData.amount,
+      currency: paymentData.currency,
+      status: paymentData.status,
+      orderId: paymentData.orderId,
+      createdAt: serverTimestamp()
+    });
+
+    return paymentRef.id;
+  } catch (error) {
+    console.error('Error saving payment details:', error);
+    throw error;
+  }
+};
+
+
+  // Open payment sheet
+  const openPaymentSheet = async () => {
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error`, error.message);
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle checkout process
+  const handleCheckout = async () => {
     if (cartItems.length === 0) {
       Alert.alert('Cart Empty', 'Please add items to your cart before proceeding to checkout.');
       return;
     }
-    
-    Alert.alert(
-      'Proceed to Checkout',
-      `Total: R${getTotalPrice().toFixed(2)}\n\nWould you like to proceed with your order?`,
-      [
-        {
-          text: 'Continue Shopping',
-          style: 'cancel'
+
+    setLoading(true);
+
+    try {
+      // 1. Save order to Firebase first
+      const orderData = {
+        items: cartItems,
+        totalAmount: getTotalPrice(),
+        currency: 'ZAR',
+        timestamp: new Date().toISOString()
+      };
+
+      const orderId = await saveOrderToFirebase(orderData);
+
+      // 2. Create payment intent on backend
+      const response = await fetch(`${BACKEND_URL}/create-payment-intent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          text: 'Checkout',
-          onPress: () => {
-            // Here you would typically navigate to checkout screen
-            Alert.alert('Success', 'Proceeding to checkout...');
+        body: JSON.stringify({
+          amount: getTotalPrice(),
+          currency: 'zar',
+          metadata: {
+            orderId: orderId,
+            items: JSON.stringify(cartItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price
+            })))
           }
+        }),
+      });
+
+      const { clientSecret, paymentIntentId } = await response.json();
+
+      if (!clientSecret) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      // 3. Initialize payment sheet
+      const initSuccess = await initializePaymentSheet(clientSecret);
+      if (!initSuccess) {
+        throw new Error('Failed to initialize payment sheet');
+      }
+
+      // 4. Present payment sheet
+      const paymentSuccess = await openPaymentSheet();
+      
+      if (paymentSuccess) {
+        // 5. Confirm payment on backend
+        const confirmResponse = await fetch(`${BACKEND_URL}/confirm-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            paymentIntentId: paymentIntentId
+          }),
+        });
+
+        const paymentResult = await confirmResponse.json();
+
+        // 6. Update order status in Firebase
+        await updateOrderStatus(orderId, {
+          status: paymentResult.status,
+          paymentIntentId: paymentIntentId
+        });
+
+        // 7. Save payment details
+        await savePaymentDetails({
+          paymentIntentId: paymentIntentId,
+          amount: getTotalPrice(),
+          currency: 'ZAR',
+          status: paymentResult.status,
+          orderId: orderId
+        });
+
+        if (paymentResult.status === 'succeeded') {
+          Alert.alert(
+            'Payment Successful!',
+            'Your order has been placed successfully. You will receive a confirmation email shortly.',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  // Clear cart and navigate
+                  setCartItems([]);
+                  setSelectedQuantity(0);
+                  // navigation.navigate('OrderConfirmation', { orderId });
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert('Payment Failed', 'Please try again or contact support.');
         }
-      ]
-    );
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Render product card
@@ -206,12 +401,17 @@ export default function ShopScreen({ navigation }) {
       {selectedQuantity > 0 && (
         <View style={styles.checkoutContainer}>
           <TouchableOpacity
-            style={styles.checkoutButton}
+            style={[styles.checkoutButton, loading && styles.checkoutButtonDisabled]}
             onPress={handleCheckout}
+            disabled={loading}
           >
-            <Text style={styles.checkoutButtonText}>
-              Add {selectedQuantity} to basket • R{getTotalPrice().toFixed(2)}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.checkoutButtonText}>
+                Add {selectedQuantity} to basket • R{getTotalPrice().toFixed(2)}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       )}
@@ -408,6 +608,9 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  checkoutButtonDisabled: {
+    backgroundColor: '#ccc',
   },
   checkoutButtonText: {
     color: '#fff',

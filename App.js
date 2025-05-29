@@ -5,6 +5,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { TouchableOpacity, View } from 'react-native';
+import { StripeProvider } from '@stripe/stripe-react-native';
 
 // Screen imports
 import GetStartedScreen from "./screens/GetStartedScreen";
@@ -26,7 +27,7 @@ function BottomTabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarStyle: {
-          position: 'absolute',
+          position: 'fixed',
           bottom: 0,
           left: 20,
           right: 20,
@@ -129,11 +130,19 @@ function AppNavigator() {
   );
 }
 
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
 export default function App() {
   return (
+    <StripeProvider
+      publishableKey={STRIPE_PUBLISHABLE_KEY}
+      merchantIdentifier="merchant.petsy.app" // Optional: for Apple Pay
+     
+    >
     <NavigationContainer>
       <StatusBar style="auto" />
       <AppNavigator />
     </NavigationContainer>
+        </StripeProvider>
   );
 }

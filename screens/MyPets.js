@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { Feather, Ionicons, FontAwesome } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { firestore } from '../utils/firebaseConfig'; 
+import { firestore,auth } from '../utils/firebaseConfig'; 
 import { 
   collection, 
   addDoc, 
@@ -73,9 +73,25 @@ export default function MyPetsScreen({ navigation }) {
   
   // Load saved pet tags from Firebase on component mount
   useEffect(() => {
-    loadPetTags();
+    
+    
     requestCameraPermission();
   }, []);
+
+  useEffect(() => {
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    if (user) {
+      // User is signed in, load their pets
+      loadPetTags();
+    } else {
+      // User is signed out, clear pets
+      setPetTags([]);
+    }
+  });
+
+  // Cleanup subscription on unmount
+  return () => unsubscribe();
+}, []);
   
   // Request camera permissions
   const requestCameraPermission = async () => {
@@ -86,28 +102,64 @@ export default function MyPetsScreen({ navigation }) {
   };
   
   // Load pet tags from Firebase
-  const loadPetTags = async () => {
-    try {
-      setLoading(true);
-      const petsRef = collection(firestore, 'pets');
-      const q = query(petsRef, orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(q);
-      
-      const pets = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        birthdate: doc.data().birthdate?.toDate() || new Date()
-      }));
-      
-      setPetTags(pets);
-    } catch (error) {
-      console.error('Error loading pets from Firebase:', error);
-      Alert.alert('Error', 'Failed to load pets. Please try again.');
-    } finally {
-      setLoading(false);
+ const loadPetTags = async () => {
+  try {
+    setLoading(true);
+    
+    // Get current user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      console.log('No authenticated user found');
+      setPetTags([]);
+      return;
     }
-  };
+    
+    const petsRef = collection(firestore, 'pets');
+    // Add where clause to filter by userId
+    const q = query(
+      petsRef, 
+      where('userId', '==', currentUser.uid),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    
+    const pets = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate(),
+      birthdate: doc.data().birthdate?.toDate() || new Date()
+    }));
+    
+    setPetTags(pets);
+  } catch (error) {
+    console.error('Error loading pets from Firebase:', error);
+    Alert.alert('Error', 'Failed to load pets. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const checkUserAuthentication = () => {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    Alert.alert(
+      'Authentication Required', 
+      'Please log in to manage your pets.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Navigate to login screen if you have one
+            // navigation.navigate('Login');
+          }
+        }
+      ]
+    );
+    return false;
+  }
+  return true;
+};
+
 
   // Handle pet card press - show more info modal
   const handlePetCardPress = (pet) => {
@@ -283,14 +335,19 @@ export default function MyPetsScreen({ navigation }) {
   };
   
   // Open drawer
-  const openDrawer = () => {
-    setDrawerVisible(true);
-    Animated.timing(drawerAnimation, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  };
+ const openDrawer = () => {
+  if (!checkUserAuthentication()) {
+    return;
+  }
+  
+  setDrawerVisible(true);
+  Animated.timing(drawerAnimation, {
+    toValue: 1,
+    duration: 300,
+    useNativeDriver: false,
+  }).start();
+};
+
   
   // Close drawer
   const closeDrawer = () => {
@@ -465,50 +522,60 @@ export default function MyPetsScreen({ navigation }) {
   
   // Complete pet addition
   const handleComplete = async () => {
-    setLoading(true);
-    
-    try {
-      const newPet = {
-        name: petData.name,
-        imageUrl: petData.imageUrl,
-        breed: petData.breed,
-        birthdate: Timestamp.fromDate(petData.birthdate),
-        age: petData.age,
-        weight: petData.weight,
-        serialNumber: petData.serialNumber,
-        imei: petData.imei,
-        tagId: petData.tagId,
-        websiteUrl: petData.websiteUrl,
-        tagMethod: petData.tagMethod,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
-      };
-      
-      const petsRef = collection(firestore, 'pets');
-      const docRef = await addDoc(petsRef, newPet);
-      
-      if (petData.serialNumber) {
-        await updateQRCodeStatus(petData.serialNumber, {
-          status: 'assigned',
-          assignedToPet: docRef.id,
-          assignedToPetName: petData.name,
-          assignedToPetImage:petData.imageUrl,
-          assignedAt: Timestamp.now()
-        });
-      }
-      
-      await loadPetTags();
-      
+  setLoading(true);
+  
+  try {
+    // Get current user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      Alert.alert('Error', 'You must be logged in to add a pet.');
       setLoading(false);
-      closeDrawer();
-      
-      Alert.alert('Success', `${petData.name} has been added to your pets!`);
-    } catch (error) {
-      setLoading(false);
-      console.error('Error saving pet profile:', error);
-      Alert.alert('Error', 'Failed to save pet profile. Please try again.');
+      return;
     }
-  };
+    
+    const newPet = {
+      name: petData.name,
+      imageUrl: petData.imageUrl,
+      breed: petData.breed,
+      birthdate: Timestamp.fromDate(petData.birthdate),
+      age: petData.age,
+      weight: petData.weight,
+      serialNumber: petData.serialNumber,
+      imei: petData.imei,
+      tagId: petData.tagId,
+      websiteUrl: petData.websiteUrl,
+      tagMethod: petData.tagMethod,
+      userId: currentUser.uid, // Add this line
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
+    };
+    
+    const petsRef = collection(firestore, 'pets');
+    const docRef = await addDoc(petsRef, newPet);
+    
+    if (petData.serialNumber) {
+      await updateQRCodeStatus(petData.serialNumber, {
+        status: 'assigned',
+        assignedToPet: docRef.id,
+        assignedToPetName: petData.name,
+        assignedToPetImage: petData.imageUrl,
+        assignedToUser: currentUser.uid, // Also track which user owns this tag
+        assignedAt: Timestamp.now()
+      });
+    }
+    
+    await loadPetTags();
+    
+    setLoading(false);
+    closeDrawer();
+    
+    Alert.alert('Success', `${petData.name} has been added to your pets!`);
+  } catch (error) {
+    setLoading(false);
+    console.error('Error saving pet profile:', error);
+    Alert.alert('Error', 'Failed to save pet profile. Please try again.');
+  }
+};
   
   // Update QR code status when assigned to a pet
   const updateQRCodeStatus = async (serialNumber, updateData) => {
