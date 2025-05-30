@@ -1,361 +1,3 @@
-// import React, { useState, useEffect } from 'react';
-// import {
-//   StyleSheet,
-//   Text,
-//   View,
-//   TouchableOpacity,
-//   Image,
-//   SafeAreaView,
-//   ScrollView,
-//   Alert,
-//   Linking
-// } from 'react-native';
-// import { Feather } from '@expo/vector-icons';
-
-// export default function NotificationsScreen({ navigation }) {
-//   const [notifications, setNotifications] = useState([
-//     {
-//       id: '1',
-//       petName: 'Lassie',
-//       petImage: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=100&h=100&fit=crop&crop=face',
-//       message: 'Lassie was found',
-//       date: '12 Jun 2023',
-//       time: '13:48',
-//       location: '12 Pine Ave, Ferndale, Johannesburg',
-//       coordinates: { latitude: -26.1076, longitude: 28.0567 },
-//       phoneNumber: '+27123456789',
-//       isRead: false
-//     },
-//     {
-//       id: '2',
-//       petName: 'Lassie',
-//       petImage: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=100&h=100&fit=crop&crop=face',
-//       message: 'Lassie was found',
-//       date: '09 Mar 2023',
-//       time: '18:58',
-//       location: '143 Astro Street, Woodmead, Johannesburg',
-//       coordinates: { latitude: -26.0808, longitude: 28.1123 },
-//       phoneNumber: '+27987654321',
-//       isRead: true
-//     }
-//   ]);
-
-//   // Handle call action
-//   const handleCall = (phoneNumber) => {
-//     const phoneUrl = `tel:${phoneNumber}`;
-//     Linking.canOpenURL(phoneUrl)
-//       .then((supported) => {
-//         if (supported) {
-//           return Linking.openURL(phoneUrl);
-//         } else {
-//           Alert.alert('Error', 'Phone calls are not supported on this device');
-//         }
-//       })
-//       .catch((err) => {
-//         console.error('Error opening phone app:', err);
-//         Alert.alert('Error', 'Failed to open phone app');
-//       });
-//   };
-
-//   // Handle navigation action
-//   const handleStartNavigation = (coordinates, location) => {
-//     const { latitude, longitude } = coordinates;
-//     const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-    
-//     Linking.canOpenURL(url)
-//       .then((supported) => {
-//         if (supported) {
-//           return Linking.openURL(url);
-//         } else {
-//           Alert.alert('Error', 'Maps application is not available');
-//         }
-//       })
-//       .catch((err) => {
-//         console.error('Error opening maps:', err);
-//         Alert.alert('Error', 'Failed to open maps application');
-//       });
-//   };
-
-//   // Handle delete action
-//   const handleDelete = (notificationId) => {
-//     Alert.alert(
-//       'Delete Notification',
-//       'Are you sure you want to delete this notification?',
-//       [
-//         {
-//           text: 'Cancel',
-//           style: 'cancel'
-//         },
-//         {
-//           text: 'Delete',
-//           style: 'destructive',
-//           onPress: () => {
-//             setNotifications(prev => 
-//               prev.filter(notification => notification.id !== notificationId)
-//             );
-//           }
-//         }
-//       ]
-//     );
-//   };
-
-//   // Mark notification as read
-//   const markAsRead = (notificationId) => {
-//     setNotifications(prev =>
-//       prev.map(notification =>
-//         notification.id === notificationId
-//           ? { ...notification, isRead: true }
-//           : notification
-//       )
-//     );
-//   };
-
-//   // Render individual notification card
-//   const renderNotificationCard = (notification) => {
-//     return (
-//       <TouchableOpacity
-//         key={notification.id}
-//         style={[
-//           styles.notificationCard,
-//           !notification.isRead && styles.unreadCard
-//         ]}
-//         onPress={() => markAsRead(notification.id)}
-//         activeOpacity={0.7}
-//       >
-//         {/* Pet Image */}
-//         <View style={styles.petImageContainer}>
-//           <Image
-//             source={{ uri: notification.petImage }}
-//             style={styles.petImage}
-//             resizeMode="cover"
-//           />
-//         </View>
-
-//         {/* Notification Content */}
-//         <View style={styles.notificationContent}>
-//           {/* Message and timestamp */}
-//           <View style={styles.messageHeader}>
-//             <Text style={styles.messageText}>{notification.message}</Text>
-//             <View style={styles.timestampContainer}>
-//               <Text style={styles.dateText}>{notification.date}</Text>
-//               <Text style={styles.timeText}>{notification.time}</Text>
-//             </View>
-//           </View>
-
-//           {/* Location */}
-//           <Text style={styles.locationText}>{notification.location}</Text>
-
-//           {/* Action Buttons */}
-//           <View style={styles.actionButtons}>
-//             <TouchableOpacity
-//               style={styles.actionButton}
-//               onPress={() => handleCall(notification.phoneNumber)}
-//             >
-//               <Text style={styles.actionButtonText}>Call</Text>
-//             </TouchableOpacity>
-
-//             <TouchableOpacity
-//               style={styles.actionButton}
-//               onPress={() => handleStartNavigation(notification.coordinates, notification.location)}
-//             >
-//               <Text style={styles.actionButtonText}>Start Navigation</Text>
-//             </TouchableOpacity>
-
-//             <TouchableOpacity
-//               style={styles.actionButton}
-//               onPress={() => handleDelete(notification.id)}
-//             >
-//               <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Delete</Text>
-//             </TouchableOpacity>
-//           </View>
-//         </View>
-
-//         {/* Unread indicator */}
-//         {!notification.isRead && <View style={styles.unreadIndicator} />}
-//       </TouchableOpacity>
-//     );
-//   };
-
-//   return (
-//     <SafeAreaView style={styles.container}>
-//       {/* Header */}
-//       <View style={styles.header}>
-//         <TouchableOpacity
-//           style={styles.backButton}
-//           onPress={() => navigation?.goBack()}
-//         >
-//           <Feather name="arrow-left" size={24} color="#000" />
-//         </TouchableOpacity>
-//         <Text style={styles.headerTitle}>Notifications</Text>
-//         <View style={styles.headerRight} />
-//       </View>
-
-//       {/* Notifications List */}
-//       <ScrollView
-//         style={styles.scrollView}
-//         contentContainerStyle={styles.scrollContent}
-//         showsVerticalScrollIndicator={false}
-//       >
-//         {notifications.length > 0 ? (
-//           notifications.map(notification => renderNotificationCard(notification))
-//         ) : (
-//           <View style={styles.emptyState}>
-//             <Feather name="bell-off" size={48} color="#ccc" />
-//             <Text style={styles.emptyStateText}>No notifications yet</Text>
-//             <Text style={styles.emptyStateSubtext}>
-//               You'll receive notifications when your pets are found
-//             </Text>
-//           </View>
-//         )}
-//       </ScrollView>
-//     </SafeAreaView>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#f5f5f5',
-//   },
-//   header: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     justifyContent: 'space-between',
-//     paddingHorizontal: 20,
-//     paddingVertical: 15,
-//     backgroundColor: '#fff',
-//     borderBottomWidth: 1,
-//     borderBottomColor: '#eee',
-//   },
-//   backButton: {
-//     padding: 5,
-//   },
-//   headerTitle: {
-//     fontSize: 20,
-//     fontWeight: 'bold',
-//     color: '#000',
-//   },
-//   headerRight: {
-//     width: 34, // Same width as back button for centering
-//   },
-//   scrollView: {
-//     flex: 1,
-//   },
-//   scrollContent: {
-//     padding: 20,
-//   },
-//   notificationCard: {
-//     backgroundColor: '#fff',
-//     borderRadius: 12,
-//     padding: 16,
-//     marginBottom: 16,
-//     shadowColor: '#000',
-//     shadowOffset: {
-//       width: 0,
-//       height: 2,
-//     },
-//     shadowOpacity: 0.1,
-//     shadowRadius: 4,
-//     elevation: 3,
-//     position: 'relative',
-//   },
-//   unreadCard: {
-//     borderLeftWidth: 4,
-//     borderLeftColor: '#0a3d62',
-//   },
-//   petImageContainer: {
-//     position: 'absolute',
-//     top: 16,
-//     left: 16,
-//     width: 50,
-//     height: 50,
-//     borderRadius: 25,
-//     overflow: 'hidden',
-//   },
-//   petImage: {
-//     width: '100%',
-//     height: '100%',
-//   },
-//   notificationContent: {
-//     marginLeft: 66, // Space for pet image + margin
-//   },
-//   messageHeader: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'flex-start',
-//     marginBottom: 8,
-//   },
-//   messageText: {
-//     fontSize: 16,
-//     fontWeight: '600',
-//     color: '#000',
-//     flex: 1,
-//   },
-//   timestampContainer: {
-//     alignItems: 'flex-end',
-//   },
-//   dateText: {
-//     fontSize: 12,
-//     color: '#666',
-//   },
-//   timeText: {
-//     fontSize: 12,
-//     color: '#666',
-//   },
-//   locationText: {
-//     fontSize: 14,
-//     color: '#666',
-//     marginBottom: 16,
-//     lineHeight: 20,
-//   },
-//   actionButtons: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//   },
-//   actionButton: {
-//     paddingVertical: 8,
-//     paddingHorizontal: 12,
-//   },
-//   actionButtonText: {
-//     fontSize: 14,
-//     color: '#0a3d62',
-//     fontWeight: '500',
-//   },
-//   deleteButtonText: {
-//     color: '#e74c3c',
-//   },
-//   unreadIndicator: {
-//     position: 'absolute',
-//     top: 16,
-//     right: 16,
-//     width: 8,
-//     height: 8,
-//     borderRadius: 4,
-//     backgroundColor: '#0a3d62',
-//   },
-//   emptyState: {
-//     flex: 1,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     paddingVertical: 60,
-//   },
-//   emptyStateText: {
-//     fontSize: 18,
-//     fontWeight: '600',
-//     color: '#666',
-//     marginTop: 16,
-//     marginBottom: 8,
-//   },
-//   emptyStateSubtext: {
-//     fontSize: 14,
-//     color: '#999',
-//     textAlign: 'center',
-//     paddingHorizontal: 40,
-//     lineHeight: 20,
-//   },
-// });
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -369,7 +11,9 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Image,
-  Dimensions
+  Dimensions,
+  StatusBar,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { auth, firestore } from '../utils/firebaseConfig'; // Adjust path as needed
@@ -384,7 +28,7 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const NotificationsScreen = ({ navigation }) => {
   const [notifications, setNotifications] = useState([]);
@@ -547,10 +191,10 @@ const NotificationsScreen = ({ navigation }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return '#FF6B35';
-      case 'contacted': return '#4ECDC4';
-      case 'resolved': return '#45B7D1';
-      default: return '#FF6B35';
+      case 'pending': return '#0a3d62';
+      case 'contacted': return '#57606f';
+      case 'resolved': return '#2f3640';
+      default: return '#0a3d62';
     }
   };
 
@@ -570,21 +214,22 @@ const NotificationsScreen = ({ navigation }) => {
       <View key={id} style={styles.notificationCard}>
         <View style={styles.cardHeader}>
           <View style={styles.headerLeft}>
-            <Ionicons 
-              name="paw" 
-              size={24} 
-              color="#FF6B35" 
-              style={styles.petIcon}
-            />
-            <View>
-              <Text style={styles.petName}>{petName} Found!</Text>
+            <View style={styles.petIconContainer}>
+              <Ionicons 
+                name="paw" 
+                size={20} 
+                color="#0a3d62" 
+              />
+            </View>
+            <View style={styles.petInfo}>
+              <Text style={styles.petName}>{petName} Found</Text>
               <Text style={styles.timestamp}>{formatTimestamp(timestamp)}</Text>
             </View>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(status) }]}>
             <Ionicons 
               name={getStatusIcon(status)} 
-              size={16} 
+              size={12} 
               color="white" 
               style={styles.statusIcon}
             />
@@ -592,20 +237,22 @@ const NotificationsScreen = ({ navigation }) => {
           </View>
         </View>
 
+        <View style={styles.divider} />
+
         <View style={styles.finderInfo}>
-          <Text style={styles.finderTitle}>Found by:</Text>
+          <Text style={styles.finderTitle}>Found by</Text>
           <Text style={styles.finderName}>{finderInfo.name}</Text>
           
           {finderInfo.location && (
             <View style={styles.locationContainer}>
-              <Ionicons name="location" size={16} color="#666" />
+              <Ionicons name="location-outline" size={14} color="#747d8c" />
               <Text style={styles.locationText}>{finderInfo.location}</Text>
             </View>
           )}
           
           {finderInfo.message && (
             <View style={styles.messageContainer}>
-              <Text style={styles.messageLabel}>Message:</Text>
+              <Text style={styles.messageLabel}>Message</Text>
               <Text style={styles.messageText}>{finderInfo.message}</Text>
             </View>
           )}
@@ -616,7 +263,7 @@ const NotificationsScreen = ({ navigation }) => {
             style={[styles.contactBtn, styles.callBtn]}
             onPress={() => handleCallFinder(finderInfo.phone)}
           >
-            <Ionicons name="call" size={20} color="white" />
+            <Ionicons name="call-outline" size={16} color="white" />
             <Text style={styles.contactBtnText}>Call</Text>
           </TouchableOpacity>
           
@@ -625,7 +272,7 @@ const NotificationsScreen = ({ navigation }) => {
               style={[styles.contactBtn, styles.emailBtn]}
               onPress={() => handleEmailFinder(finderInfo.email, petName)}
             >
-              <Ionicons name="mail" size={20} color="white" />
+              <Ionicons name="mail-outline" size={16} color="white" />
               <Text style={styles.contactBtnText}>Email</Text>
             </TouchableOpacity>
           )}
@@ -633,19 +280,19 @@ const NotificationsScreen = ({ navigation }) => {
 
         {status === 'pending' && (
           <TouchableOpacity 
-            style={styles.markContactedBtn}
+            style={styles.actionBtn}
             onPress={() => markAsContacted(id)}
           >
-            <Text style={styles.markContactedText}>Mark as Contacted</Text>
+            <Text style={styles.actionBtnText}>Mark as Contacted</Text>
           </TouchableOpacity>
         )}
 
         {status === 'contacted' && (
           <TouchableOpacity 
-            style={styles.resolveBtn}
+            style={[styles.actionBtn, styles.resolveBtn]}
             onPress={() => markAsResolved(id, petName)}
           >
-            <Text style={styles.resolveBtnText}>Mark as Resolved</Text>
+            <Text style={styles.actionBtnText}>Mark as Resolved</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -655,8 +302,9 @@ const NotificationsScreen = ({ navigation }) => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#fafbfc" />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0a3d62" />
           <Text style={styles.loadingText}>Loading notifications...</Text>
         </View>
       </SafeAreaView>
@@ -665,23 +313,35 @@ const NotificationsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fafbfc" />
+      
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Pet Notifications</Text>
-        <Text style={styles.headerSubtitle}>
-          {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
-        </Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Pet Notifications</Text>
+          <Text style={styles.headerSubtitle}>
+            {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
       </View>
 
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={handleRefresh}
+            colors={['#0a3d62']}
+            tintColor="#0a3d62"
+          />
         }
         showsVerticalScrollIndicator={false}
       >
         {notifications.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="notifications-off" size={64} color="#ccc" />
+            <View style={styles.emptyIconContainer}>
+              <Ionicons name="notifications-off-outline" size={48} color="#a4b0be" />
+            </View>
             <Text style={styles.emptyTitle}>No Notifications</Text>
             <Text style={styles.emptyText}>
               You'll be notified here when someone finds your pet
@@ -698,24 +358,29 @@ const NotificationsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fafbfc',
   },
   header: {
-    backgroundColor: 'white',
+    backgroundColor: '#fafbfc',
+    paddingTop: Platform.OS === 'ios' ? 0 : StatusBar.currentHeight || 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
+  },
+  headerContent: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#2f3640',
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: '#747d8c',
     marginTop: 4,
+    fontWeight: '500',
   },
   loadingContainer: {
     flex: 1,
@@ -725,167 +390,209 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: '#747d8c',
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   notificationCard: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
+    borderRadius: 16,
+    padding: 20,
+    marginVertical: 6,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f1f2f6',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 16,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  petIcon: {
+  petIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f3f8',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
+  },
+  petInfo: {
+    flex: 1,
   },
   petName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '600',
+    color: '#2f3640',
+    letterSpacing: -0.2,
   },
   timestamp: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: '#747d8c',
     marginTop: 2,
+    fontWeight: '500',
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   statusIcon: {
     marginRight: 4,
   },
   statusText: {
     color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
-  finderInfo: {
+  divider: {
+    height: 1,
+    backgroundColor: '#f1f2f6',
     marginBottom: 16,
   },
+  finderInfo: {
+    marginBottom: 20,
+  },
   finderTitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
+    fontSize: 13,
+    color: '#747d8c',
+    marginBottom: 6,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   finderName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    color: '#2f3640',
+    marginBottom: 10,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   locationText: {
     fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
+    color: '#747d8c',
+    marginLeft: 6,
+    fontWeight: '500',
   },
   messageContainer: {
     marginTop: 8,
-    padding: 12,
+    padding: 16,
     backgroundColor: '#f8f9fa',
-    borderRadius: 8,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#0a3d62',
   },
   messageLabel: {
     fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+    color: '#747d8c',
+    marginBottom: 6,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   messageText: {
     fontSize: 14,
-    color: '#333',
+    color: '#2f3640',
     lineHeight: 20,
+    fontWeight: '500',
   },
   contactButtons: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 16,
+    gap: 8,
   },
   contactBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginHorizontal: 4,
+    paddingVertical: 14,
+    borderRadius: 12,
   },
   callBtn: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#0a3d62',
   },
   emailBtn: {
-    backgroundColor: '#2196F3',
+    backgroundColor: '#57606f',
   },
   contactBtnText: {
     color: 'white',
-    fontWeight: 'bold',
-    marginLeft: 8,
+    fontWeight: '600',
+    marginLeft: 6,
+    fontSize: 14,
   },
-  markContactedBtn: {
-    backgroundColor: '#4ECDC4',
-    paddingVertical: 12,
-    borderRadius: 8,
+  actionBtn: {
+    backgroundColor: '#f1f3f8',
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
-  },
-  markContactedText: {
-    color: 'white',
-    fontWeight: 'bold',
+    borderWidth: 1,
+    borderColor: '#e1e5e9',
   },
   resolveBtn: {
-    backgroundColor: '#45B7D1',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+    backgroundColor: '#0a3d62',
+    borderColor: '#0a3d62',
   },
-  resolveBtnText: {
-    color: 'white',
-    fontWeight: 'bold',
+  actionBtnText: {
+    color: '#57606f',
+    fontWeight: '600',
+    fontSize: 14,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 64,
+    paddingVertical: 80,
+    paddingHorizontal: 32,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 16,
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#2f3640',
+    marginBottom: 8,
+    letterSpacing: -0.3,
   },
   emptyText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 16,
+    color: '#747d8c',
     textAlign: 'center',
-    marginTop: 8,
-    paddingHorizontal: 32,
+    lineHeight: 24,
+    fontWeight: '500',
   },
 });
 

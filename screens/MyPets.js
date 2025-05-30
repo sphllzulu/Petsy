@@ -1192,14 +1192,7 @@ petCardArrow: {
     fontWeight: '600',
     marginLeft: 8,
   },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-  },
+ 
   navItem: {
     flex: 1,
     alignItems: 'center',

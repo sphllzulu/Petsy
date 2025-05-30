@@ -8,7 +8,9 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  StatusBar,
+  Platform
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useStripe } from '@stripe/stripe-react-native';
@@ -305,56 +307,60 @@ export default function ShopScreen({ navigation }) {
     
     return (
       <View key={product.id} style={styles.productCard}>
-        {/* Product Image */}
-        <View style={styles.productImageContainer}>
-          <Image
-            source={{ uri: product.image }}
-            style={styles.productImage}
-            resizeMode="cover"
-          />
-          {/* Overlay for pet tags visualization */}
-          <View style={styles.tagsOverlay}>
-            <View style={[styles.tag, styles.leftTag]}>
-              <Feather name="heart" size={12} color="#0a3d62" />
-            </View>
-            <View style={[styles.tag, styles.rightTag]}>
-              <Text style={styles.tagText}>🐾</Text>
+        <View style={styles.cardContent}>
+          {/* Product Image */}
+          <View style={styles.productImageContainer}>
+            <Image
+              source={{ uri: product.image }}
+              style={styles.productImage}
+              resizeMode="cover"
+            />
+            {/* Overlay for pet tags visualization */}
+            <View style={styles.tagsOverlay}>
+              <View style={[styles.tag, styles.leftTag]}>
+                <Feather name="heart" size={10} color="#0a3d62" />
+              </View>
+              <View style={[styles.tag, styles.rightTag]}>
+                <Text style={styles.tagText}>🐾</Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Product Info */}
-        <View style={styles.productInfo}>
-          <View style={styles.productHeader}>
-            <View style={styles.productDetails}>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productDescription}>{product.description}</Text>
-              <Text style={styles.productPrice}>
-                {product.currency}{product.price.toFixed(2)}
-              </Text>
-            </View>
+          {/* Product Info */}
+          <View style={styles.productInfo}>
+            <View style={styles.productHeader}>
+              <View style={styles.productDetails}>
+                <Text style={styles.productName}>{product.name}</Text>
+                <Text style={styles.productDescription}>{product.description}</Text>
+                <Text style={styles.productPrice}>
+                  {product.currency}{product.price.toFixed(2)}
+                </Text>
+              </View>
 
-            {/* Add/Remove Buttons */}
-            <View style={styles.quantityControls}>
-              {quantity > 0 && (
+              {/* Add/Remove Buttons */}
+              <View style={styles.quantityControls}>
+                {quantity > 0 && (
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => removeFromCart(product.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name="minus" size={14} color="#fff" />
+                  </TouchableOpacity>
+                )}
+                
+                {quantity > 0 && (
+                  <Text style={styles.quantityText}>{quantity}</Text>
+                )}
+                
                 <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => removeFromCart(product.id)}
+                  style={styles.addButton}
+                  onPress={() => addToCart(product)}
+                  activeOpacity={0.8}
                 >
-                  <Feather name="minus" size={16} color="#fff" />
+                  <Feather name="plus" size={14} color="#fff" />
                 </TouchableOpacity>
-              )}
-              
-              {quantity > 0 && (
-                <Text style={styles.quantityText}>{quantity}</Text>
-              )}
-              
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => addToCart(product)}
-              >
-                <Feather name="plus" size={16} color="#fff" />
-              </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -364,25 +370,32 @@ export default function ShopScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fafbfc" />
+      
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation?.goBack()}
-        >
-          <Feather name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Shop</Text>
-        <TouchableOpacity style={styles.cartButton}>
-          <Feather name="shopping-cart" size={24} color="#000" />
-          {cartItems.length > 0 && (
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>
-                {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation?.goBack()}
+            activeOpacity={0.7}
+          >
+            <Feather name="arrow-left" size={22} color="#2f3640" />
+          </TouchableOpacity>
+          
+          <Text style={styles.headerTitle}>Shop</Text>
+          
+          <TouchableOpacity style={styles.cartButton} activeOpacity={0.7}>
+            <Feather name="shopping-cart" size={22} color="#2f3640" />
+            {cartItems.length > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>
+                  {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Products List */}
@@ -391,6 +404,11 @@ export default function ShopScreen({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Pet Tags</Text>
+          <Text style={styles.sectionSubtitle}>Keep your pets safe and identifiable</Text>
+        </View>
+        
         {products.map(product => renderProductCard(product))}
         
         {/* Additional spacing for checkout button */}
@@ -400,17 +418,31 @@ export default function ShopScreen({ navigation }) {
       {/* Checkout Button */}
       {selectedQuantity > 0 && (
         <View style={styles.checkoutContainer}>
+          <View style={styles.checkoutShadow} />
           <TouchableOpacity
             style={[styles.checkoutButton, loading && styles.checkoutButtonDisabled]}
             onPress={handleCheckout}
             disabled={loading}
+            activeOpacity={0.9}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color="#ffffff" size="small" />
             ) : (
-              <Text style={styles.checkoutButtonText}>
-                Add {selectedQuantity} to basket • R{getTotalPrice().toFixed(2)}
-              </Text>
+              <>
+                <View style={styles.checkoutContent}>
+                  <View style={styles.checkoutLeft}>
+                    <Text style={styles.checkoutButtonText}>
+                      Add to basket
+                    </Text>
+                    <Text style={styles.checkoutSubtext}>
+                      {selectedQuantity} item{selectedQuantity > 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <Text style={styles.checkoutPrice}>
+                    R{getTotalPrice().toFixed(2)}
+                  </Text>
+                </View>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -422,74 +454,112 @@ export default function ShopScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fafbfc',
   },
   header: {
+    backgroundColor: '#fafbfc',
+    paddingTop: Platform.OS === 'ios' ? 0 : StatusBar.currentHeight || 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingVertical: 16,
   },
   backButton: {
-    padding: 5,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2f3640',
+    letterSpacing: -0.5,
   },
   cartButton: {
-    padding: 5,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    alignItems: 'center',
     position: 'relative',
   },
   cartBadge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#e74c3c',
+    top: -2,
+    right: -2,
+    backgroundColor: '#0a3d62',
     borderRadius: 10,
     minWidth: 20,
     height: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fafbfc',
   },
   cartBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  sectionHeader: {
+    paddingHorizontal: 4,
+    paddingVertical: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#2f3640',
+    marginBottom: 4,
+    letterSpacing: -0.3,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#747d8c',
+    fontWeight: '500',
   },
   productCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    overflow: 'hidden',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f1f2f6',
+  },
+  cardContent: {
+    padding: 20,
   },
   productImageContainer: {
     width: 80,
     height: 80,
-    margin: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f8f9fa',
+    marginBottom: 16,
+    alignSelf: 'flex-start',
   },
   productImage: {
     width: '100%',
@@ -506,32 +576,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   tag: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#fff',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#e1e5e9',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
   },
   leftTag: {
-    marginRight: 8,
+    marginRight: 6,
   },
   rightTag: {
-    marginLeft: 8,
+    marginLeft: 6,
   },
   tagText: {
-    fontSize: 10,
+    fontSize: 8,
   },
   productInfo: {
-    padding: 16,
-    paddingTop: 0,
+    flex: 1,
   },
   productHeader: {
     flexDirection: 'row',
@@ -543,78 +612,121 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   productName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#2f3640',
     marginBottom: 8,
+    letterSpacing: -0.3,
   },
   productDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#747d8c',
     lineHeight: 20,
-    marginBottom: 12,
+    marginBottom: 16,
+    fontWeight: '500',
   },
   productPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0a3d62',
+    letterSpacing: -0.2,
   },
   quantityControls: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   quantityButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#e74c3c',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#747d8c',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 12,
   },
   quantityText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginRight: 8,
+    fontWeight: '600',
+    marginRight: 12,
     minWidth: 20,
     textAlign: 'center',
+    color: '#2f3640',
   },
   addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#0a3d62',
     justifyContent: 'center',
     alignItems: 'center',
   },
   bottomSpacing: {
-    height: 100, // Space for checkout button
+    height: 120, // Space for checkout button
   },
   checkoutContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingBottom: 40, // Extra padding for safe area
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    backgroundColor: '#fafbfc',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+  },
+  checkoutShadow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: '#e1e5e9',
   },
   checkoutButton: {
     backgroundColor: '#0a3d62',
-    borderRadius: 25,
-    paddingVertical: 15,
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#0a3d62',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   checkoutButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#a4b0be',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  checkoutContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  checkoutLeft: {
+    alignItems: 'flex-start',
   },
   checkoutButtonText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  checkoutSubtext: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  checkoutPrice: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
 });

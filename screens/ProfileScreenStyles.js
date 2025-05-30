@@ -1,0 +1,476 @@
+import { StyleSheet, Dimensions } from 'react-native';
+
+const { height, width } = Dimensions.get('window');
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  headerBackButton: {
+    padding: 8,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#0a3d62',
+    marginTop: 20,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  activeTabButton: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#0a3d62',
+  },
+  tabButtonText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
+  },
+  activeTabButtonText: {
+    color: '#0a3d62',
+    fontWeight: '600',
+  },
+  tabContent: {
+    flex: 1,
+    padding: 20,
+  },
+  imageSection: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  imageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: '#0a3d62',
+    overflow: 'hidden',
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  petImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  petName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  petBreed: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  detailSection: {
+    marginBottom: 30,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  appearanceText: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 24,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  detailLabel: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  detailValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  detailValue: {
+    fontSize: 16,
+    color: '#666',
+    marginRight: 8,
+  },
+  editIcon: {
+    opacity: 0.6,
+  },
+  ownerContactText: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 24,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  vaccinationsList: {
+    flex: 1,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#999',
+    marginTop: 16,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#ccc',
+    marginTop: 8,
+  },
+  yearSection: {
+    marginBottom: 20,
+  },
+  yearTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  vaccinationCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+  },
+  vaccinationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+  },
+  vaccinationDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  vaccinationDate: {
+    fontSize: 14,
+    color: '#666',
+  },
+  vaccinationVet: {
+    fontSize: 14,
+    color: '#007AFF',
+  },
+  addVaccinationButton: {
+    backgroundColor: '#0a3d62',
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  addVaccinationButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    width: width * 0.9,
+    maxHeight: height * 0.8,
+  },
+  editModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  editModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  modalCloseButton: {
+    padding: 5,
+  },
+  editInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 16,
+    marginBottom: 20,
+    textAlignVertical: 'top',
+  },
+  editModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cancelButton: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    flex: 0.45,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  saveButton: {
+    backgroundColor: '#0a3d62',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    flex: 0.45,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  ownerContactFormContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: width * 0.95,
+    height: height * 0.85, 
+    paddingBottom: 0, 
+  },
+  ownerContactFormHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  ownerContactFormTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  ownerContactFormScroll: {
+    flex: 1,
+    padding: 20,
+  },
+  ownerContactFormButtons: {
+    paddingHorizontal: 20,
+  },
+  vaccinationDetailContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: width * 0.95,
+    height: height * 0.85, 
+    paddingBottom: 0, 
+  },
+  vaccinationDetailHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  vaccinationBackButton: {
+    padding: 5,
+  },
+  vaccinationDetailTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+    textAlign: 'center',
+  },
+  vaccinationActionButtons: {
+    flexDirection: 'row',
+  },
+  editVaccinationButton: {
+    padding: 8,
+    marginRight: 10,
+  },
+  deleteVaccinationButton: {
+    padding: 8,
+  },
+  vaccinationDetailSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+    paddingHorizontal: 20,
+  },
+  vaccinationDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  vaccinationDetailLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  vaccinationDetailValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  veterinarianSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  veterinarianAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  veterinarianInitials: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  veterinarianInfo: {
+    flex: 1,
+  },
+  veterinarianName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  veterinarianTitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  vaccinationAddress: {
+    fontSize: 14,
+    color: '#666',
+    paddingHorizontal: 20,
+    lineHeight: 20,
+  },
+  vaccinationNotes: {
+    fontSize: 14,
+    color: '#666',
+    paddingHorizontal: 20,
+    lineHeight: 20,
+  },
+  vaccinationFormContent: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: width * 0.95,
+    height: height * 0.85,
+    paddingBottom: 0,
+  },
+  deletePetButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    paddingVertical: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deletePetButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  vaccinationFormHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  vaccinationFormTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  vaccinationFormScroll: {
+    flex: 1,
+    padding: 20,
+  },
+  vaccinationFormButtons: {
+    paddingHorizontal: 20,
+  },
+  formGroup: {
+    marginBottom: 20,
+  },
+  formLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 8,
+  },
+  formInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    textAlignVertical: 'top',
+  },
+  
+});

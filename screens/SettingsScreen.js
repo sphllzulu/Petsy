@@ -11,6 +11,8 @@ import {
   TextInput,
   SafeAreaView,
   StatusBar,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import { auth } from '../utils/firebaseConfig'; // Adjust path as needed
 import { 
@@ -21,6 +23,115 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider
 } from 'firebase/auth';
+
+const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
+const isShortDevice = screenHeight < 700;
+const isSmallDevice = screenWidth < 375;
+
+const PrivacyPolicy = `PRIVACY POLICY FOR PETSY APP
+
+Last updated: ${new Date().toLocaleDateString()}
+
+1. INFORMATION WE COLLECT
+We collect information you provide directly to us, such as when you create an account, update your profile, or contact us for support.
+
+Types of information we may collect include:
+• Account information (email, display name)
+• Pet profiles and information
+• Usage data and app interactions
+• Device information and identifiers
+
+2. HOW WE USE YOUR INFORMATION
+We use the information we collect to:
+• Provide, maintain, and improve our services
+• Process transactions and send related information
+• Send technical notices and support messages
+• Respond to your comments and questions
+• Monitor and analyze usage patterns
+
+3. INFORMATION SHARING
+We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except:
+• To comply with legal obligations
+• To protect our rights and safety
+• With your explicit consent
+• To trusted service providers who assist in app operations
+
+4. DATA SECURITY
+We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.
+
+5. DATA RETENTION
+We retain your information for as long as your account is active or as needed to provide services. You may request deletion at any time.
+
+6. YOUR RIGHTS
+You have the right to:
+• Access your personal information
+• Correct inaccurate information
+• Delete your account and data
+• Opt-out of communications
+
+7. CHILDREN'S PRIVACY
+Our service is not directed to children under 13. We do not knowingly collect personal information from children under 13.
+
+8. CHANGES TO PRIVACY POLICY
+We may update this policy periodically. We will notify you of significant changes via email or app notification.
+
+Contact us at privacy@petsy.app for questions about this policy.`;
+
+const TermsOfService = `TERMS OF SERVICE FOR PETSY APP
+
+Last updated: ${new Date().toLocaleDateString()}
+
+1. ACCEPTANCE OF TERMS
+By accessing and using Petsy, you accept and agree to be bound by these Terms of Service.
+
+2. DESCRIPTION OF SERVICE
+Petsy is a mobile application designed to help pet owners manage their pets' information, health records, and care schedules.
+
+3. USER ACCOUNTS
+• You must provide accurate information when creating an account
+• You are responsible for maintaining account security
+• You must be at least 13 years old to use this service
+• One person may not maintain multiple accounts
+
+4. USER CONDUCT
+You agree not to:
+• Use the service for illegal purposes
+• Upload harmful, offensive, or inappropriate content
+• Attempt to gain unauthorized access to our systems
+• Interfere with other users' use of the service
+• Violate any applicable laws or regulations
+
+5. CONTENT AND DATA
+• You retain ownership of content you submit
+• You grant us license to use your content to provide services
+• We may remove content that violates these terms
+• You're responsible for backing up your data
+
+6. PRIVACY
+Your privacy is important to us. Please review our Privacy Policy to understand how we collect and use your information.
+
+7. DISCLAIMERS
+• The service is provided "as is" without warranties
+• We don't guarantee uninterrupted or error-free service
+• Pet care information is for reference only, not professional advice
+• Always consult veterinarians for medical concerns
+
+8. LIMITATION OF LIABILITY
+Petsy shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the service.
+
+9. TERMINATION
+We may terminate or suspend your account for violations of these terms. You may delete your account at any time.
+
+10. GOVERNING LAW
+These terms are governed by the laws of [Your Jurisdiction].
+
+11. CHANGES TO TERMS
+We reserve the right to modify these terms. Continued use after changes constitutes acceptance.
+
+12. CONTACT INFORMATION
+For questions about these terms, contact us at legal@petsy.app
+
+By using Petsy, you acknowledge that you have read and understood these terms.`;
 
 const SettingsScreen = () => {
   const [user, setUser] = useState(auth.currentUser);
@@ -33,12 +144,17 @@ const SettingsScreen = () => {
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [termsModalVisible, setTermsModalVisible] = useState(false);
+  const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] = useState(false);
   
   // Form states
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -59,10 +175,13 @@ const SettingsScreen = () => {
         {
           text: 'Sign Out',
           style: 'destructive',
-          onPress: () => {
-            signOut(auth).catch((error) => {
+          onPress: async () => {
+            try {
+              await signOut(auth);
+              Alert.alert('Success', 'You have been signed out successfully');
+            } catch (error) {
               Alert.alert('Error', 'Failed to sign out: ' + error.message);
-            });
+            }
           },
         },
       ]
@@ -121,30 +240,43 @@ const SettingsScreen = () => {
     }
   };
 
+  const initiateAccountDeletion = () => {
+    setDeleteConfirmModalVisible(true);
+  };
+
   const handleDeleteAccount = async () => {
-    Alert.alert(
-      'Delete Account',
-      'This action is permanent and cannot be undone. All your data will be lost.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteUser(user);
-              Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
-            } catch (error) {
-              if (error.code === 'auth/requires-recent-login') {
-                Alert.alert('Error', 'Please sign out and sign back in, then try again.');
-              } else {
-                Alert.alert('Error', error.message);
-              }
-            }
-          },
-        },
-      ]
-    );
+    if (!deleteConfirmPassword) {
+      Alert.alert('Error', 'Please enter your password to confirm deletion');
+      return;
+    }
+
+    if (deleteConfirmText.toLowerCase() !== 'delete my account') {
+      Alert.alert('Error', 'Please type "delete my account" to confirm');
+      return;
+    }
+
+    try {
+      // Re-authenticate user before deletion
+      const credential = EmailAuthProvider.credential(user.email, deleteConfirmPassword);
+      await reauthenticateWithCredential(user, credential);
+      
+      // Delete the user
+      await deleteUser(user);
+      
+      Alert.alert(
+        'Account Deleted', 
+        'Your account and all associated data have been permanently deleted.',
+        [{ text: 'OK', onPress: () => setDeleteConfirmModalVisible(false) }]
+      );
+    } catch (error) {
+      if (error.code === 'auth/wrong-password') {
+        Alert.alert('Error', 'Incorrect password. Please try again.');
+      } else if (error.code === 'auth/requires-recent-login') {
+        Alert.alert('Error', 'Please sign out and sign back in, then try again.');
+      } else {
+        Alert.alert('Error', 'Failed to delete account: ' + error.message);
+      }
+    }
   };
 
   const SettingItem = ({ title, subtitle, onPress, rightComponent, showArrow = true }) => (
@@ -159,6 +291,88 @@ const SettingsScreen = () => {
 
   const SectionHeader = ({ title }) => (
     <Text style={styles.sectionHeader}>{title}</Text>
+  );
+
+  const DocumentModal = ({ visible, onClose, title, content }) => (
+    <Modal
+      animationType="slide"
+      transparent={false}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <SafeAreaView style={styles.documentModalContainer}>
+        <View style={styles.documentHeader}>
+          <Text style={styles.documentTitle}>{title}</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView style={styles.documentContent}>
+          <Text style={styles.documentText}>{content}</Text>
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+
+  const DeleteConfirmModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={deleteConfirmModalVisible}
+      onRequestClose={() => setDeleteConfirmModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { maxHeight: screenHeight * 0.8 }]}>
+          <Text style={styles.modalTitle}>Delete Account</Text>
+          <Text style={styles.deleteWarningText}>
+            ⚠️ This action is permanent and cannot be undone. All your data, including pet profiles, 
+            health records, and app settings will be permanently deleted.
+          </Text>
+          
+          <Text style={styles.deleteInstructionText}>
+            To confirm deletion, please:
+          </Text>
+          
+          <Text style={styles.deleteStepText}>1. Enter your current password:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Current Password"
+            secureTextEntry
+            value={deleteConfirmPassword}
+            onChangeText={setDeleteConfirmPassword}
+          />
+          
+          <Text style={styles.deleteStepText}>2. Type "delete my account" below:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Type: delete my account"
+            value={deleteConfirmText}
+            onChangeText={setDeleteConfirmText}
+            autoCapitalize="none"
+          />
+          
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => {
+                setDeleteConfirmModalVisible(false);
+                setDeleteConfirmPassword('');
+                setDeleteConfirmText('');
+              }}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.modalButton, styles.deleteButton]}
+              onPress={handleDeleteAccount}
+            >
+              <Text style={styles.deleteButtonText}>Delete Account</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 
   const PasswordModal = () => (
@@ -182,7 +396,7 @@ const SettingsScreen = () => {
           
           <TextInput
             style={styles.input}
-            placeholder="New Password"
+            placeholder="New Password (min 6 characters)"
             secureTextEntry
             value={newPassword}
             onChangeText={setNewPassword}
@@ -199,7 +413,12 @@ const SettingsScreen = () => {
           <View style={styles.modalButtons}>
             <TouchableOpacity
               style={[styles.modalButton, styles.cancelButton]}
-              onPress={() => setPasswordModalVisible(false)}
+              onPress={() => {
+                setPasswordModalVisible(false);
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+              }}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -258,7 +477,11 @@ const SettingsScreen = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Account Section */}
         <SectionHeader title="ACCOUNT" />
         
@@ -273,6 +496,7 @@ const SettingsScreen = () => {
             title="Email"
             subtitle={user?.email || 'No email'}
             onPress={() => Alert.alert('Info', 'Email cannot be changed from this screen')}
+            showArrow={false}
           />
           
           <SettingItem
@@ -281,102 +505,18 @@ const SettingsScreen = () => {
           />
         </View>
 
-        {/* Security Section */}
-        <SectionHeader title="SECURITY" />
-        
-        <View style={styles.section}>
-          <SettingItem
-            title="Two-Factor Authentication"
-            subtitle="Add an extra layer of security"
-            onPress={() => Alert.alert('Coming Soon', 'Two-factor authentication will be available soon')}
-          />
-          
-          <SettingItem
-            title="Biometric Login"
-            subtitle="Use fingerprint or face recognition"
-            rightComponent={
-              <Switch
-                value={biometricEnabled}
-                onValueChange={setBiometricEnabled}
-                trackColor={{ false: '#767577', true: '#007AFF' }}
-                thumbColor={biometricEnabled ? '#fff' : '#f4f3f4'}
-              />
-            }
-            showArrow={false}
-          />
-          
-          <SettingItem
-            title="Login Sessions"
-            subtitle="Manage your active sessions"
-            onPress={() => Alert.alert('Info', 'View and manage devices that are signed into your account')}
-          />
-        </View>
-
-        {/* App Preferences */}
-        <SectionHeader title="PREFERENCES" />
-        
-        <View style={styles.section}>
-          <SettingItem
-            title="Push Notifications"
-            subtitle="Receive important updates"
-            rightComponent={
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ false: '#767577', true: '#007AFF' }}
-                thumbColor={notificationsEnabled ? '#fff' : '#f4f3f4'}
-              />
-            }
-            showArrow={false}
-          />
-          
-          <SettingItem
-            title="Dark Mode"
-            subtitle="Switch to dark theme"
-            rightComponent={
-              <Switch
-                value={darkMode}
-                onValueChange={setDarkMode}
-                trackColor={{ false: '#767577', true: '#007AFF' }}
-                thumbColor={darkMode ? '#fff' : '#f4f3f4'}
-              />
-            }
-            showArrow={false}
-          />
-          
-          <SettingItem
-            title="Auto Sync"
-            subtitle="Automatically sync your data"
-            rightComponent={
-              <Switch
-                value={autoSync}
-                onValueChange={setAutoSync}
-                trackColor={{ false: '#767577', true: '#007AFF' }}
-                thumbColor={autoSync ? '#fff' : '#f4f3f4'}
-              />
-            }
-            showArrow={false}
-          />
-        </View>
-
         {/* Data & Privacy */}
         <SectionHeader title="DATA & PRIVACY" />
         
         <View style={styles.section}>
           <SettingItem
-            title="Download My Data"
-            subtitle="Export your account data"
-            onPress={() => Alert.alert('Feature', 'Data export functionality coming soon')}
-          />
-          
-          <SettingItem
             title="Privacy Policy"
-            onPress={() => Alert.alert('Info', 'Privacy Policy would open here')}
+            onPress={() => setPrivacyModalVisible(true)}
           />
           
           <SettingItem
             title="Terms of Service"
-            onPress={() => Alert.alert('Info', 'Terms of Service would open here')}
+            onPress={() => setTermsModalVisible(true)}
           />
         </View>
 
@@ -391,8 +531,8 @@ const SettingsScreen = () => {
           
           <SettingItem
             title="Delete Account"
-            subtitle="Permanently delete your account"
-            onPress={handleDeleteAccount}
+            subtitle="Permanently delete your account and all data"
+            onPress={initiateAccountDeletion}
           />
         </View>
         
@@ -404,6 +544,21 @@ const SettingsScreen = () => {
 
       <PasswordModal />
       <ProfileModal />
+      <DeleteConfirmModal />
+      
+      <DocumentModal
+        visible={privacyModalVisible}
+        onClose={() => setPrivacyModalVisible(false)}
+        title="PrivacyPolicy"
+        content={PrivacyPolicy}
+      />
+      
+      <DocumentModal
+        visible={termsModalVisible}
+        onClose={() => setTermsModalVisible(false)}
+        title="TermsOfService"
+        content={TermsOfService}
+      />
     </SafeAreaView>
   );
 };
@@ -416,11 +571,14 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: isShortDevice ? 20 : 30,
+  },
   sectionHeader: {
-    fontSize: 13,
+    fontSize: isSmallDevice ? 12 : 13,
     fontWeight: '600',
     color: '#666',
-    marginTop: 30,
+    marginTop: isShortDevice ? 20 : 30,
     marginBottom: 8,
     marginHorizontal: 16,
     letterSpacing: 0.5,
@@ -443,21 +601,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: isShortDevice ? 10 : 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#e1e1e1',
+    minHeight: isShortDevice ? 44 : 48,
   },
   settingContent: {
     flex: 1,
   },
   settingTitle: {
-    fontSize: 16,
+    fontSize: isSmallDevice ? 15 : 16,
     fontWeight: '500',
     color: '#000',
     marginBottom: 2,
   },
   settingSubtitle: {
-    fontSize: 14,
+    fontSize: isSmallDevice ? 13 : 14,
     color: '#666',
   },
   arrow: {
@@ -467,8 +626,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: 20,
-    marginTop: 20,
+    paddingVertical: isShortDevice ? 15 : 20,
+    marginTop: isShortDevice ? 15 : 20,
   },
   footerText: {
     fontSize: 12,
@@ -486,15 +645,16 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 20,
+    padding: isShortDevice ? 16 : 20,
     width: '90%',
     maxWidth: 400,
+    maxHeight: isShortDevice ? '85%' : '80%',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: isSmallDevice ? 17 : 18,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: isShortDevice ? 16 : 20,
     color: '#000',
   },
   input: {
@@ -502,14 +662,15 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: Platform.OS === 'ios' ? 12 : 10,
     marginBottom: 12,
-    fontSize: 16,
+    fontSize: isSmallDevice ? 15 : 16,
     backgroundColor: '#f9f9f9',
+    minHeight: 44,
   },
   modalButtons: {
     flexDirection: 'row',
-    marginTop: 20,
+    marginTop: isShortDevice ? 16 : 20,
     gap: 12,
   },
   modalButton: {
@@ -517,6 +678,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   cancelButton: {
     backgroundColor: '#f0f0f0',
@@ -524,15 +687,83 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: '#007AFF',
   },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+  },
   cancelButtonText: {
     color: '#666',
-    fontSize: 16,
+    fontSize: isSmallDevice ? 15 : 16,
     fontWeight: '500',
   },
   confirmButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: isSmallDevice ? 15 : 16,
     fontWeight: '500',
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontSize: isSmallDevice ? 15 : 16,
+    fontWeight: '500',
+  },
+  
+  // Delete Account Modal Styles
+  deleteWarningText: {
+    fontSize: 14,
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  deleteInstructionText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 12,
+  },
+  deleteStepText: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  
+  // Document Modal Styles
+  documentModalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  documentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e1e1e1',
+    backgroundColor: '#f8f8f8',
+  },
+  documentTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000',
+  },
+  closeButton: {
+    padding: 8,
+  },
+  closeButtonText: {
+    fontSize: 18,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  documentContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  documentText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#333',
   },
 });
 
